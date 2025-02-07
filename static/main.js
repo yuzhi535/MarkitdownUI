@@ -1,3 +1,42 @@
+// 使 skipSetup 在全局可用
+window.skipSetup = function() {
+    const apiKeyModal = document.getElementById('apiKeyModal');
+    if (apiKeyModal) {
+        apiKeyModal.style.display = 'none';
+    }
+};
+
+// 使 saveApiKey 在全局可用
+window.saveApiKey = function() {
+    const apiKeyModal = document.getElementById('apiKeyModal');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const apiKey = apiKeyInput.value.trim();
+    
+    if (apiKey.startsWith('AI') && apiKey.length > 2) {
+        localStorage.setItem('geminiApiKey', apiKey);
+        apiKeyModal.style.display = 'none';
+    }
+};
+
+// 使 validateApiKeyInput 在全局可用
+window.validateApiKeyInput = function(input) {
+    const value = input.value.trim();
+    const isValid = value.startsWith('AI') && value.length > 2;
+    const saveKeyBtn = document.getElementById('saveKeyBtn');
+    
+    if (saveKeyBtn) {
+        saveKeyBtn.disabled = !isValid;
+    }
+    
+    const statusIcon = input.parentElement.querySelector('.input-status-icon');
+    if (statusIcon) {
+        statusIcon.style.display = isValid ? 'block' : 'none';
+        statusIcon.style.color = isValid ? '#52c41a' : '#ff4d4f';
+    }
+    
+    return isValid;
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     // 添加后端API基础URL配置
     const API_BASE_URL = 'http://localhost:8000';
@@ -14,6 +53,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const confirmSaveBtn = document.getElementById('confirmSave');
     const progress = document.getElementById('progress');
     const actionButtons = document.getElementById('actionButtons');
+    const apiKeyModal = document.getElementById('apiKeyModal');
+
+    // 检查是否需要显示API设置
+    function checkApiKeySetup() {
+        const apiKey = localStorage.getItem('geminiApiKey');
+        if (!apiKey) {
+            showApiKeySettings();
+        }
+    }
+
+    // 显示API设置对话框
+    function showApiKeySettings() {
+        if (apiKeyModal) {
+            apiKeyModal.style.display = 'block';
+        }
+    }
 
     // 确保 actionButtons 元素存在
     if (actionButtons) {
@@ -266,4 +321,10 @@ document.addEventListener('DOMContentLoaded', function() {
             convertBtn.textContent = '转换';
         }
     });
+
+    // 绑定设置按钮事件
+    document.querySelector('.settings-btn').addEventListener('click', showApiKeySettings);
+
+    // 初始检查API设置
+    checkApiKeySetup();
 });
