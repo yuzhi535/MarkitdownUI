@@ -3,37 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MarkItDown - 文档转换工具</title>
+    <title>MarkItDownUI - 文档转换工具</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.24.15/antd.min.css">
     <link href="/static/styles.css" rel="stylesheet">
 </head>
 <body>
     <!-- API密钥设置对话框 -->
-    <div id="apiKeyModal" class="ant-modal" style="display: none;">
+    <div id="apiKeyModal" class="ant-modal api-key-modal" style="display: none;">
         <div class="ant-modal-mask"></div>
         <div class="ant-modal-wrap">
             <div class="ant-modal">
                 <div class="ant-modal-content">
                     <div class="ant-modal-header">
-                        <div class="ant-modal-title">设置 API 密钥</div>
+                        <div class="ant-modal-title">
+                            <span style="font-size: 16px; font-weight: 500;">设置 API 密钥</span>
+                        </div>
                     </div>
                     <div class="ant-modal-body">
                         <div class="ant-form-item">
-                            <div class="ant-form-item-label">
-                                <label>Gemini API 密钥</label>
+                            <div class="api-key-input-wrapper">
+                                <input 
+                                    type="password" 
+                                    id="apiKeyInput" 
+                                    class="ant-input"
+                                    placeholder="输入以 'AI' 开头的 Gemini API 密钥"
+                                    oninput="validateApiKeyInput(this)"
+                                >
+                                <span class="input-status-icon">
+                                    <svg viewBox="64 64 896 896" focusable="false" width="14" height="14">
+                                        <path d="M912 190h-69.9c-9.8 0-19.1 4.5-25.1 12.2L404.7 724.5 207 474a32 32 0 00-25.1-12.2H112c-6.7 0-10.4 7.7-6.3 12.9l273.9 347c12.8 16.2 37.4 16.2 50.3 0l488.4-618.9c4.1-5.1.4-12.8-6.3-12.8z"></path>
+                                    </svg>
+                                </span>
                             </div>
-                            <div class="ant-form-item-control">
-                                <input type="password" id="apiKeyInput" class="ant-input" placeholder="输入以 'AI' 开头的 Gemini API 密钥">
-                                <div class="ant-form-item-explain">密钥格式必须以"AI"开头</div>
+                            <div class="key-hint">
+                                <p>💡 您的API密钥:</p>
+                                <ul style="margin: 8px 0; padding-left: 20px;">
+                                    <li>必须以"AI"开头</li>
+                                    <li>将安全地存储在您的浏览器中</li>
+                                    <li>仅用于文档转换服务</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
                     <div class="ant-modal-footer">
-                        <button class="ant-btn" onclick="skipSetup()">
-                            <span>暂不设置</span>
+                        <button class="ant-btn" onclick="skipSetup()" style="margin-right: 8px;">
+                            稍后设置
                         </button>
-                        <button class="ant-btn ant-btn-primary" onclick="saveApiKey()">
-                            <span>确定</span>
+                        <button id="saveKeyBtn" class="ant-btn ant-btn-primary" onclick="saveApiKey()" disabled>
+                            确定
                         </button>
                     </div>
                 </div>
@@ -44,22 +61,27 @@
     <div class="container">
         <div class="header">
             <h1>MarkItDown</h1>
-            <p class="subtitle">将 PDF、Word 文档快速转换为 Markdown 格式</p>
+            <p class="subtitle">将 PDF、Word 文档、音乐、网页、PPT、压缩包、表格文件快速转换为 Markdown 格式</p>
         </div>
 
         <div class="header-actions">
-            <button onclick="showApiKeySettings()">API密钥设置</button>
+            <button class="ant-btn ant-btn-default settings-btn" onclick="showApiKeySettings()">
+                <svg viewBox="64 64 896 896" focusable="false" width="14" height="14" fill="currentColor">
+                    <path d="M924.8 625.7l-65.5-56c3.1-19 4.7-38.4 4.7-57.8s-1.6-38.8-4.7-57.8l65.5-56a32.03 32.03 0 009.3-35.2l-.9-2.6a443.74 443.74 0 00-79.7-137.9l-1.8-2.1a32.12 32.12 0 00-35.1-9.5l-81.3 28.9c-30-24.6-63.5-44-99.7-57.6l-15.7-85a32.05 32.05 0 00-25.8-25.7l-2.7-.5c-52.1-9.4-106.9-9.4-159 0l-2.7.5a32.05 32.05 0 00-25.8 25.7l-15.8 85.4a351.86 351.86 0 00-99 57.4l-81.9-29.1a32 32 0 00-35.1 9.5l-1.8 2.1a446.02 446.02 0 00-79.7 137.9l-.9 2.6c-4.5 12.5-.8 26.5 9.3 35.2l66.3 56.6c-3.1 18.8-4.6 38-4.6 57.1 0 19.2 1.5 38.4 4.6 57.1L99 625.5a32.03 32.03 0 00-9.3 35.2l.9 2.6c18.1 50.4 44.9 96.9 79.7 137.9l1.8 2.1a32.12 32.12 0 0035.1 9.5l81.9-29.1c29.8 24.5 63.1 43.9 99 57.4l15.8 85.4a32.05 32.05 0 0025.8 25.7l2.7.5a449.4 449.4 0 00159 0l2.7-.5a32.05 32.05 0 0025.8-25.7l15.7-85a350 350 0 0099.7-57.6l81.3 28.9a32 32 0 0035.1-9.5l1.8-2.1c34.8-41.1 61.6-87.5 79.7-137.9l.9-2.6c4.5-12.3.8-26.3-9.3-35zM788.3 465.9c2.5 15.1 3.8 30.6 3.8 46.1s-1.3 31-3.8 46.1l-6.6 40.1 74.7 63.9a370.03 370.03 0 01-42.6 73.6L721 702.8l-31.4 25.8c-23.9 19.6-50.5 35-79.3 45.8l-38.1 14.3-17.9 97a377.5 377.5 0 01-85 0l-17.9-97.2-37.8-14.5c-28.5-10.8-55-26.2-78.7-45.7l-31.4-25.9-93.4 33.2c-17-22.9-31.2-47.6-42.6-73.6l75.5-64.5-6.5-40c-2.4-14.9-3.7-30.3-3.7-45.5 0-15.3 1.2-30.6 3.7-45.5l6.5-40-75.5-64.5c11.3-26.1 25.6-50.7 42.6-73.6l93.4 33.2 31.4-25.9c23.7-19.5 50.2-34.9 78.7-45.7l37.9-14.3 17.9-97.2c28.1-3.2 56.8-3.2 85 0l17.9 97 38.1 14.3c28.7 10.8 55.4 26.2 79.3 45.8l31.4 25.8 92.8-32.9c17 22.9 31.2 47.6 42.6 73.6L781.8 426l6.5 39.9zM512 326c-97.2 0-176 78.8-176 176s78.8 176 176 176 176-78.8 176-176-78.8-176-176-176zm79.2 255.2A111.6 111.6 0 01512 614c-29.9 0-58-11.7-79.2-32.8A111.6 111.6 0 01400 502c0-29.9 11.7-58 32.8-79.2C454 401.6 482.1 390 512 390c29.9 0 58 11.6 79.2 32.8A111.6 111.6 0 01624 502c0 29.9-11.7 58-32.8 79.2z"></path>
+                </svg>
+                <span>API 设置</span>
+            </button>
         </div>
 
         <div class="main-content">
-            <div id="dropZone" class="upload-area">
-                <input type="file" id="fileInput" class="hidden" accept=".pdf,.docx,.txt">
+            <div id="dropZone" class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" class="hidden" accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.bmp,.mp3,.wav,.m4a,.ogg,.html,.htm,.csv,.json,.xml,.zip">
                 <div class="upload-inner">
                     <span class="ant-upload-icon">
                         <svg viewBox="64 64 896 896" focusable="false" data-icon="inbox" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M885.2 446.3l-.2-.8-112.2-285.1c-5-16.1-19.9-27.2-36.8-27.2H281.2c-17 0-32.1 11.3-36.9 27.6L139.4 443l-.3.7-.2.8c-1.3 4.9-1.7 9.9-1 14.8-.1 1.6-.2 3.2-.2 4.8V830a60.9 60.9 0 0060.8 60.8h627.2c33.5 0 60.8-27.3 60.8-60.8V464.1c0-1.3 0-2.6-.1-3.7.4-4.9 0-9.6-1.3-14.1zm-295.8-43l-.3 15.7c-.8 44.9-31.8 75.1-77.1 75.1-22.1 0-41.1-7.1-54.8-20.6S436 441.2 435.6 419l-.3-15.7H229.5L309 210h399.2l81.7 193.3H589.4zm-375 76.8h157.3c24.3 57.1 76 90.8 140.4 90.8 33.7 0 65-9.4 90.3-27.2 22.2-15.6 39.5-37.4 50.7-63.6h156.5V814H214.4V480.1z"></path></svg>
                     </span>
                     <p class="ant-upload-text">点击或拖拽文件到此区域</p>
-                    <p class="ant-upload-hint">支持 PDF、DOCX、TXT 格式</p>
+                    <p class="ant-upload-hint">支持 pdf,ppt,pptx,doc,docx,xls,xlsx,jpg,jpeg,png,gif,bmp,mp3,wav,m4a,ogg,html,htm,csv,json,xml,zip 格式</p>
                 </div>
             </div>
 
@@ -113,138 +135,5 @@
         </div>
     </div>
     <script src="/static/main.js"></script>
-    <script>
-        // API密钥管理
-        const API_KEY_STORAGE_KEY = 'geminiApiKey';
-
-        function getApiKey() {
-            return localStorage.getItem(API_KEY_STORAGE_KEY);
-        }
-
-        function setApiKey(key) {
-            if (key) {
-                localStorage.setItem(API_KEY_STORAGE_KEY, key);
-                return true;
-            }
-            return false;
-        }
-
-        function clearApiKey() {
-            localStorage.removeItem(API_KEY_STORAGE_KEY);
-        }
-
-        function showApiKeySettings() {
-            document.getElementById('apiKeyModal').style.display = 'block';
-            const currentKey = getApiKey();
-            if (currentKey) {
-                document.getElementById('apiKeyInput').value = currentKey;
-            }
-        }
-
-        function saveApiKey() {
-            const apiKey = document.getElementById('apiKeyInput').value.trim();
-            if (!apiKey) {
-                alert('请输入API密钥');
-                return;
-            }
-            if (!apiKey.startsWith('AI')) {
-                alert('无效的API密钥格式，密钥必须以"AI"开头');
-                return;
-            }
-            
-            setApiKey(apiKey);
-            hideApiKeyModal();
-            alert('API密钥已成功保存！');
-        }
-
-        function skipSetup() {
-            hideApiKeyModal();
-            alert('您可以随时通过顶部的"API密钥设置"按钮进行配置\n注意：未设置密钥可能影响转换效果');
-        }
-
-        function showApiKeyModal(force = false) {
-            const modal = document.getElementById('apiKeyModal');
-            if (force || !getApiKey()) {
-                modal.style.display = 'block';
-                // 防止背景滚动
-                document.body.style.overflow = 'hidden';
-            }
-        }
-
-        function hideApiKeyModal() {
-            document.getElementById('apiKeyModal').style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-
-        // 文件处理
-        async function handleFile(file) {
-            const apiKey = getApiKey();
-            if (!apiKey) {
-                showApiKeySettings();
-                return;
-            }
-            console.log('API密钥:', apiKey);
-
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('api_key', apiKey);
-
-            // 调试：在控制台输出 FormData 的内容
-            for (let pair of formData.entries()) {
-                console.log(pair[0]+ ', '+ pair[1]);
-            }
-            
-            try {
-                const response = await fetch('/convert', {
-                    method: 'POST',
-                    body: formData,
-                    mode: 'cors'
-                });
-                
-                // 调试：输出完整的响应内容
-                const responseText = await response.text();
-                console.log('服务器响应:', responseText);
-
-                if (!response.ok) {
-                    try {
-                        const errorData = JSON.parse(responseText);
-                        throw new Error(errorData.error || '请求失败');
-                    } catch (e) {
-                        throw new Error('请求失败，无法解析错误信息');
-                    }
-                }
-                
-                const data = JSON.parse(responseText);
-                if (data.success) {
-                    document.getElementById('preview').textContent = data.markdown;
-                    document.getElementById('preview').style.display = 'block';
-                } else {
-                    throw new Error(data.error || '转换失败');
-                }
-            } catch (error) {
-                console.error('转换错误:', error);
-                if (error.message.includes('API密钥')) {
-                    clearApiKey();
-                    showApiKeySettings();
-                }
-                alert(error.message);
-            }
-        }
-
-        // 页面加载时检查API密钥
-        document.addEventListener('DOMContentLoaded', function() {
-            showApiKeyModal();
-        });
-
-        // 添加事件监听器
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                handleFile(file);
-            }
-        });
-
-        // ...其他辅助函数（拖放处理、复制到剪贴板等）...
-    </script>
 </body>
 </html>

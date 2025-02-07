@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from markitdown import MarkItDown
 from google import genai
+from openai import OpenAI
 import tempfile
 import os
 import logging
@@ -81,7 +82,11 @@ async def convert_file(
     try:
         api_key = api_key.strip()
         client = genai.Client(api_key=api_key)
-        md = MarkItDown(llm_client=client, llm_model="gemini-pro")
+        client = OpenAI(
+            api_key=api_key,
+            base_url="https://gemini.zayx.me/v1beta/openai/"
+        )
+        md = MarkItDown(llm_client=client, llm_model="gemini-2.0-flash")
     except Exception as e:
         logger.error(f"API密钥验证失败: {str(e)}")
         return JSONResponse(
@@ -100,7 +105,18 @@ async def convert_file(
         )
 
     # 检查文件类型
-    allowed_extensions = set(os.getenv('ALLOWED_EXTENSIONS', '.pdf,.docx,.txt').split(','))
+    allowed_extensions = {
+        '.pdf',  # PDF文件
+        '.ppt', '.pptx',  # PowerPoint
+        '.doc', '.docx',  # Word
+        '.xls', '.xlsx',  # Excel
+        '.jpg', '.jpeg', '.png', '.gif', '.bmp',  # 图片
+        '.mp3', '.wav', '.m4a', '.ogg',  # 音频
+        '.html', '.htm',  # HTML
+        '.csv', '.json', '.xml',  # 文本格式
+        '.zip'  # ZIP压缩文件
+    }
+    
     file_ext = os.path.splitext(file.filename)[1].lower()
     
     logger.info(f"文件扩展名: {file_ext}")

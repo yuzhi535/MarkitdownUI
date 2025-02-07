@@ -57,20 +57,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const dt = e.dataTransfer;
         const file = dt.files[0];
         
-        if (file) {
+        if (file && handleFile(file)) {
             fileInput.files = dt.files;
-            handleFile(file);
         }
     }
 
     function handleFile(file) {
         // 检查文件类型
-        const allowedTypes = ['.pdf', '.docx', '.txt'];
+        const allowedTypes = [
+            '.pdf', '.ppt', '.pptx', '.doc', '.docx', '.xls', '.xlsx',
+            '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.mp3', '.wav', '.m4a', '.ogg',
+            '.html', '.htm', '.csv', '.json', '.xml', '.zip'
+        ];
         const fileExtension = file.name.toLowerCase().substr(file.name.lastIndexOf('.'));
         
         if (!allowedTypes.includes(fileExtension)) {
-            alert('不支持的文件格式！请上传 PDF、DOCX 或 TXT 文件。');
-            return;
+            alert('不支持的文件格式！请上传以下格式的文件：pdf, ppt, pptx, doc, docx, xls, xlsx, jpg, jpeg, png, gif, bmp, mp3, wav, m4a, ogg, html, htm, csv, json, xml, zip');
+            return false;
         }
 
         // 显示文件名
@@ -87,13 +90,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // 设置默认保存文件名
         const baseName = file.name.substring(0, file.name.lastIndexOf('.'));
         filenameInput.value = `${baseName}.md`;
+        
+        return true;
     }
 
     // 监听文件输入变化
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
-        if (file) {
-            handleFile(file);
+        if (file && !handleFile(file)) {
+            // 如果文件处理失败，清空文件输入
+            fileInput.value = '';
         }
     });
 
@@ -190,6 +196,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // 再次验证文件类型
+        if (!handleFile(file)) {
+            return;
+        }
+
         const formData = new FormData();
         formData.append('file', file);
 
@@ -209,46 +220,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 body: formData,
                 headers: {
-                    'Accept': 'application/json',
                     'X-API-KEY': apiKey
                 }
             });
 
-            let result;
-            try {
-                const responseText = await response.text();
-                console.log('服务器响应:', responseText);  // 调试日志
-                result = JSON.parse(responseText);
-            } catch (parseError) {
-                console.error('原始响应:', await response.text());
-                throw new Error('无法解析服务器响应');
-            }
-
             if (!response.ok) {
-                throw new Error(result.error || `服务器错误 (${response.status})`);
+                throw new Error(`服务器错误 (${response.status})`);
             }
 
-            if (!result.success) {
-                throw new Error(result.error || '转换失败');
+            const responseText = await response.text();
+            let result;
+
+            try {
+                result = JSON.parse(responseText);
+            } catch (error) {
+                // 如果响应是纯文本，直接作为 Markdown 处理
+                result = {
+                    success: true,
+                    markdown: responseText
+                };
             }
 
             // 添加格式化处理
             const formattedMarkdown = formatMarkdown(result.markdown || '');
             preview.innerHTML = `<pre class="whitespace-pre-wrap">${formattedMarkdown}</pre>`;
             
-            // 转换成功后显示操作按钮区域
             if (actionButtons) {
                 actionButtons.style.display = 'flex';
             }
             updateProgress();
             completeProgress();
+
         } catch (error) {
             progress.style.display = 'none';
             console.error('转换错误:', error);
-            preview.innerHTML = `<p class="text-red-500">转换失败: ${error.message}</p>`;
-            // 隐藏操作按钮区域
-             if (actionButtons) {
-                actionButtons.style.display = 'none';
+            // 如果预览区域已经显示了内容，就不显示错误信息
+            if (!preview.querySelector('pre')) {
+                preview.innerHTML = `<p class="text-red-500">转换失败: ${error.message}</p>`;
+                if (actionButtons) {
+                    actionButtons.style.display = 'none';
+                }
             }
         } finally {
             convertBtn.disabled = false;
