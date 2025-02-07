@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarkItDown - 文档转换工具</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.24.15/antd.min.css">
+    <link href="/static/styles.css" rel="stylesheet">
+</head>
+<body>
+    <!-- API密钥设置对话框 -->
+    <div id="apiKeyModal" class="ant-modal" style="display: none;">
+        <div class="ant-modal-mask"></div>
+        <div class="ant-modal-wrap">
+            <div class="ant-modal">
+                <div class="ant-modal-content">
+                    <div class="ant-modal-header">
+                        <div class="ant-modal-title">设置 API 密钥</div>
+                    </div>
+                    <div class="ant-modal-body">
+                        <div class="ant-form-item">
+                            <div class="ant-form-item-label">
+                                <label>Gemini API 密钥</label>
+                            </div>
+                            <div class="ant-form-item-control">
+                                <input type="password" id="apiKeyInput" class="ant-input" placeholder="输入以 'AI' 开头的 Gemini API 密钥">
+                                <div class="ant-form-item-explain">密钥格式必须以"AI"开头</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ant-modal-footer">
+                        <button class="ant-btn" onclick="skipSetup()">
+                            <span>暂不设置</span>
+                        </button>
+                        <button class="ant-btn ant-btn-primary" onclick="saveApiKey()">
+                            <span>确定</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>MarkItDown</h1>
+            <p class="subtitle">将 PDF、Word 文档快速转换为 Markdown 格式</p>
+        </div>
+
+        <div class="header-actions">
+            <button onclick="showApiKeySettings()">API密钥设置</button>
+        </div>
+
+        <div class="main-content">
+            <div id="dropZone" class="upload-area">
+                <input type="file" id="fileInput" class="hidden" accept=".pdf,.docx,.txt">
+                <div class="upload-inner">
+                    <span class="ant-upload-icon">
+                        <svg viewBox="64 64 896 896" focusable="false" data-icon="inbox" width="48" height="48" fill="currentColor" aria-hidden="true"><path d="M885.2 446.3l-.2-.8-112.2-285.1c-5-16.1-19.9-27.2-36.8-27.2H281.2c-17 0-32.1 11.3-36.9 27.6L139.4 443l-.3.7-.2.8c-1.3 4.9-1.7 9.9-1 14.8-.1 1.6-.2 3.2-.2 4.8V830a60.9 60.9 0 0060.8 60.8h627.2c33.5 0 60.8-27.3 60.8-60.8V464.1c0-1.3 0-2.6-.1-3.7.4-4.9 0-9.6-1.3-14.1zm-295.8-43l-.3 15.7c-.8 44.9-31.8 75.1-77.1 75.1-22.1 0-41.1-7.1-54.8-20.6S436 441.2 435.6 419l-.3-15.7H229.5L309 210h399.2l81.7 193.3H589.4zm-375 76.8h157.3c24.3 57.1 76 90.8 140.4 90.8 33.7 0 65-9.4 90.3-27.2 22.2-15.6 39.5-37.4 50.7-63.6h156.5V814H214.4V480.1z"></path></svg>
+                    </span>
+                    <p class="ant-upload-text">点击或拖拽文件到此区域</p>
+                    <p class="ant-upload-hint">支持 PDF、DOCX、TXT 格式</p>
+                </div>
+            </div>
+
+            <div class="button-container">
+                <button id="convertBtn" class="ant-btn ant-btn-primary ant-btn-lg">
+                    <span>开始转换</span>
+                </button>
+            </div>
+
+            <div class="preview-section">
+                <div class="preview-header">
+                    <h2>预览</h2>
+                    <div id="actionButtons" class="action-buttons">
+                        <button id="formatBtn" class="ant-btn ant-btn-default">
+                            <span>格式化</span>
+                        </button>
+                        <button id="saveBtn" class="ant-btn ant-btn-primary">
+                            <span>保存为 Markdown</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="progress" class="progress-bar"></div>
+                <div id="preview" class="preview-content"></div>
+            </div>
+        </div>
+
+        <div id="saveDialog" class="modal-overlay hidden">
+            <div class="ant-modal">
+                <div class="ant-modal-content">
+                    <div class="ant-modal-header">
+                        <div class="ant-modal-title">保存文件</div>
+                    </div>
+                    <div class="ant-modal-body">
+                        <div class="ant-form-item">
+                            <label class="ant-form-item-label">文件名</label>
+                            <div class="ant-form-item-control">
+                                <input type="text" id="filename" class="ant-input" value="converted.md">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ant-modal-footer">
+                        <button id="cancelSave" class="ant-btn">
+                            <span>取消</span>
+                        </button>
+                        <button id="confirmSave" class="ant-btn ant-btn-primary">
+                            <span>确定</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/main.js"></script>
+    <script>
+        // API密钥管理
+        const API_KEY_STORAGE_KEY = 'geminiApiKey';
+
+        function getApiKey() {
+            return localStorage.getItem(API_KEY_STORAGE_KEY);
+        }
+
+        function setApiKey(key) {
+            if (key) {
+                localStorage.setItem(API_KEY_STORAGE_KEY, key);
+                return true;
+            }
+            return false;
+        }
+
+        function clearApiKey() {
+            localStorage.removeItem(API_KEY_STORAGE_KEY);
+        }
+
+        function showApiKeySettings() {
+            document.getElementById('apiKeyModal').style.display = 'block';
+            const currentKey = getApiKey();
+            if (currentKey) {
+                document.getElementById('apiKeyInput').value = currentKey;
+            }
+        }
+
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            if (!apiKey) {
+                alert('请输入API密钥');
+                return;
+            }
+            if (!apiKey.startsWith('AI')) {
+                alert('无效的API密钥格式，密钥必须以"AI"开头');
+                return;
+            }
+            
+            setApiKey(apiKey);
+            hideApiKeyModal();
+            alert('API密钥已成功保存！');
+        }
+
+        function skipSetup() {
+            hideApiKeyModal();
+            alert('您可以随时通过顶部的"API密钥设置"按钮进行配置\n注意：未设置密钥可能影响转换效果');
+        }
+
+        function showApiKeyModal(force = false) {
+            const modal = document.getElementById('apiKeyModal');
+            if (force || !getApiKey()) {
+                modal.style.display = 'block';
+                // 防止背景滚动
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function hideApiKeyModal() {
+            document.getElementById('apiKeyModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // 文件处理
+        async function handleFile(file) {
+            const apiKey = getApiKey();
+            if (!apiKey) {
+                showApiKeySettings();
+                return;
+            }
+            console.log('API密钥:', apiKey);
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('api_key', apiKey);
+
+            // 调试：在控制台输出 FormData 的内容
+            for (let pair of formData.entries()) {
+                console.log(pair[0]+ ', '+ pair[1]);
+            }
+            
+            try {
+                const response = await fetch('/convert', {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'cors'
+                });
+                
+                // 调试：输出完整的响应内容
+                const responseText = await response.text();
+                console.log('服务器响应:', responseText);
+
+                if (!response.ok) {
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        throw new Error(errorData.error || '请求失败');
+                    } catch (e) {
+                        throw new Error('请求失败，无法解析错误信息');
+                    }
+                }
+                
+                const data = JSON.parse(responseText);
+                if (data.success) {
+                    document.getElementById('preview').textContent = data.markdown;
+                    document.getElementById('preview').style.display = 'block';
+                } else {
+                    throw new Error(data.error || '转换失败');
+                }
+            } catch (error) {
+                console.error('转换错误:', error);
+                if (error.message.includes('API密钥')) {
+                    clearApiKey();
+                    showApiKeySettings();
+                }
+                alert(error.message);
+            }
+        }
+
+        // 页面加载时检查API密钥
+        document.addEventListener('DOMContentLoaded', function() {
+            showApiKeyModal();
+        });
+
+        // 添加事件监听器
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        });
+
+        // ...其他辅助函数（拖放处理、复制到剪贴板等）...
+    </script>
+</body>
+</html>

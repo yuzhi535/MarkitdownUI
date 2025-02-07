@@ -1,0 +1,119 @@
+.ant-modal {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.ant-modal-mask {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.45);
+    pointer-events: auto;
+}
+
+.ant-modal-wrap {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    overflow: auto;
+    outline: 0;
+    pointer-events: auto;
+}
+
+.ant-modal {
+    position: relative;
+    top: 100px;
+    margin: 0 auto;
+    width: 520px;
+    max-width: calc(100vw - 32px);
+    padding-bottom: 24px;
+}
+
+.ant-modal-content {
+    position: relative;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 0;
+    border-radius: 8px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    pointer-events: auto;
+}
+
+.ant-modal-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.ant-modal-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.ant-modal-body {
+    padding: 24px;
+}
+
+.ant-modal-footer {
+    padding: 10px 16px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.ant-form-item {
+    margin-bottom: 24px;
+}
+
+.ant-form-item-label {
+    margin-bottom: 8px;
+}
+
+.ant-form-item-explain {
+    margin-top: 4px;
+    color: rgba(0, 0, 0, 0.45);
+    font-size: 14px;
+}
+
+/* 动画效果 */
+@keyframes modalShow {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ant-modal-content {
+    animation: modalShow 0.3s ease-out;
+}
+
+.error-message {
+    color: #ff4d4f;
+    margin: 8px 0;
+    font-size: 14px;
+}
+
+.preview-error {
+    padding: 16px;
+    background-color: #fff2f0;
+    border: 1px solid #ffccc7;
+    border-radius: 4px;
+    margin: 16px 0;
+}

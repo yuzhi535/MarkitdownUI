@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API 配置提示</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="config-notice">
+        <h2>首次使用配置提示</h2>
+        <p>为了获得更好的文档转换效果，建议配置以下 API 密钥：</p>
+        <ul>
+            <li>OpenAI API 密钥</li>
+            <li>Google Gemini API 密钥</li>
+        </ul>
+        <div class="notice-warning">
+            <p>注意：您仍可以不配置这些密钥继续使用，但转换效果可能受到影响。</p>
+        </div>
+        <a href="/config" class="button">去配置</a>
+        <a href="/" class="button">暂时跳过</a>
+    </div>
+</body>
+</html>

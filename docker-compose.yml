@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: markitdown-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./.env:/app/.env
+
+  frontend:
+    image: nginx:alpine
+    container_name: markitdown-frontend
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./static:/usr/share/nginx/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
