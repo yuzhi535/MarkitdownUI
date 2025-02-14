@@ -22,13 +22,148 @@ A powerful web interface for converting various file formats to Markdown using A
   - Nginx configuration included
   - CORS enabled
   - Gzip compression for better performance
+  - Automated deployment with GitHub Actions
 
 - **Security Features**:
   - API key authentication
   - File size limits
   - Secure file handling
 
-## Requirements
+## Project Structure
+
+```
+markitdown/
+├── .github/
+│   └── workflows/        # GitHub Actions workflows
+│       └── deploy.yml    # Deployment configuration
+├── Backend
+│   ├── app.py           # Main FastAPI application
+│   ├── auth.py          # Authentication logic
+│   ├── models.py        # Data models
+│   └── requirements.txt # Python dependencies
+├── Frontend
+│   ├── static/         # Static assets
+│   │   ├── main.js     # Frontend application logic
+│   │   ├── styles.css  # Global styles
+│   │   └── css/
+│   │       └── style.css # Component styles
+│   └── templates/      # HTML templates
+│       ├── index.html  # Main application page
+│       └── config_notice.html
+├── nginx/             # Nginx configuration
+│   └── default.conf
+├── Dockerfile        # Docker configuration
+└── docker-compose.yml
+```
+
+## Running the Application
+
+### Development Mode
+
+1. Install backend dependencies:
+```bash
+python -m venv venv
+source venv/bin/activate  # For Unix/macOS
+# or
+.\venv\Scripts\activate  # For Windows
+
+pip install -r requirements.txt
+```
+
+2. Start the backend server:
+```bash
+uvicorn app:app --reload --host 0.0.0.0 --port 8000
+```
+
+3. Access the application:
+   - Open your browser and navigate to `http://localhost:8000`
+   - The frontend will be automatically served by the FastAPI backend
+   - First-time users will be prompted to enter their API key
+
+Note: In development mode, CORS is configured to allow requests from any origin, so you can access the API from any domain for testing purposes.
+
+### Production Mode (Docker)
+
+1. Update the CORS configuration in `app.py`:
+   ```python
+   origins = [
+       "http://your-domain.com",  # Replace with your production domain
+       "https://your-domain.com"
+   ]
+   ```
+
+2. Build and run with Docker Compose:
+```bash
+docker-compose up --build
+```
+
+3. Access the application:
+   - Open your browser and navigate to `http://localhost` (or your configured domain)
+   - The frontend will be served through Nginx
+   - First-time users will be prompted to enter their API key
+
+## Automated Deployment
+
+The project includes GitHub Actions workflow for automated deployment. The workflow:
+1. Runs tests
+2. Builds Docker image
+3. Pushes to Docker Hub
+4. Deploys to production server
+
+### Required Secrets
+
+Set up the following secrets in your GitHub repository:
+
+1. Docker Hub credentials:
+   - `DOCKERHUB_USERNAME`: Your Docker Hub username
+   - `DOCKERHUB_TOKEN`: Docker Hub access token
+
+2. Server credentials:
+   - `SERVER_HOST`: Production server hostname/IP
+   - `SERVER_USERNAME`: SSH username
+   - `SERVER_SSH_KEY`: SSH private key for server access
+
+### Deployment Process
+
+1. Push to main branch triggers deployment:
+```bash
+git push origin main
+```
+
+2. GitHub Actions will:
+   - Run tests
+   - Build Docker image
+   - Push to Docker Hub
+   - Deploy to production server
+   - Cleanup old containers
+
+3. Monitor deployment:
+   - Check GitHub Actions tab for deployment status
+   - Review logs in Actions workflow
+   - Verify application status on production server
+
+## Frontend Development
+
+The frontend is a static web application served by the FastAPI backend. No separate frontend server or build process is required.
+
+### Modifying the Frontend
+
+1. Edit the frontend files:
+   - `templates/index.html` - Main HTML template
+   - `static/main.js` - Frontend JavaScript logic
+   - `static/styles.css` and `static/css/style.css` - CSS styles
+
+2. Changes take effect immediately:
+   - After editing frontend files, simply refresh your browser
+   - No build step or separate server required
+   - The FastAPI backend serves the updated files automatically
+
+### Frontend Dependencies
+The frontend uses vanilla JavaScript and doesn't require any external dependencies or package manager. All necessary styles and scripts are included in the static files.
+
+## Backend Setup
+
+### Requirements
 
 ```
 fastapi
@@ -39,7 +174,7 @@ google-genai
 openai
 ```
 
-## Installation
+### Installation
 
 1. Clone the repository:
 ```bash
@@ -64,21 +199,6 @@ pip install -r requirements.txt
 Create a `.env` file in the root directory with:
 ```env
 MAX_CONTENT_LENGTH=52428800  # 50MB in bytes
-```
-
-## Running the Application
-
-### Development Mode
-
-```bash
-uvicorn app:app --reload --host 0.0.0.0 --port 8000
-```
-
-### Production Mode (Docker)
-
-1. Build and run with Docker Compose:
-```bash
-docker-compose up --build
 ```
 
 ## API Usage
@@ -109,26 +229,6 @@ The API returns appropriate HTTP status codes:
 - `400`: Invalid request (unsupported file type, file too large)
 - `401`: Invalid or missing API key
 - `500`: Server error during conversion
-
-## Development
-
-The project structure:
-```
-markitdown/
-├── app.py              # Main FastAPI application
-├── auth.py            # Authentication logic
-├── models.py          # Data models
-├── requirements.txt   # Python dependencies
-├── static/           # Static files
-│   ├── main.js
-│   └── styles.css
-├── templates/        # HTML templates
-│   └── index.html
-├── nginx/           # Nginx configuration
-│   └── default.conf
-├── Dockerfile       # Docker configuration
-└── docker-compose.yml
-```
 
 ## License
 

@@ -22,12 +22,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 # 配置CORS
-origins = [
-    "http://localhost:5500",
-    "http://127.0.0.1:5500",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-]
+origins = ["*"]  # 允许所有域名，用于开发环境。生产环境中请配置具体的域名。
 
 app.add_middleware(
     CORSMiddleware,
